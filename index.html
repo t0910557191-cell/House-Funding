@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#7A5338">
+<meta name="theme-color" content="#7E5D3E">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="一磚一瓦">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
@@ -14,27 +14,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;600&display=swap">
 <style>
-/* Layout: a leather-bound notebook — cognac leather cover, index tabs, a stitched paper page per section; red as the one accent, Nordic eight-point stars as ornament */
+/* Layout: a kraft-paper notebook — kraft cover, index tabs, a stitched paper page per section; red as the one accent, Nordic eight-point stars as ornament */
 :root{
-  --leather:#9A6E4C; --leather-deep:#7A5338; --on-leather:#F6EEE3; --stitch:#E9D6BF;
+  --leather:#C6A27A; --leather-deep:#7E5D3E; --on-leather:#3A2A1E; --on-tab:#F7EFE4; --stitch:#8A6A4A;
   --paper:#F8F4EE; --paper-2:#EFE8DE; --ink:#2C2420; --ink-soft:#75685D; --line:#E0D6C9;
   --red:#B3322A; --red-soft:#F6DEDA; --good:#4F8A55; --good-soft:#DDEBDA; --warn:#C08A1E; --warn-soft:#F6E7C6; --brick:#C4573F; --brick-2:#D97A5C;
   --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --leather:#3B2A1F; --leather-deep:#2A1D15; --on-leather:#EADFD0; --stitch:#7C6450;
+  --leather:#4A3A2B; --leather-deep:#2C2118; --on-leather:#EADFD0; --on-tab:#EADFD0; --stitch:#A8896A;
   --paper:#25201C; --paper-2:#2E2823; --ink:#EDE5DA; --ink-soft:#AA9D8F; --line:#40372F;
   --red:#E06A5E; --red-soft:#43231F; --good:#93C08F; --good-soft:#243423; --warn:#E2B354; --warn-soft:#3D301A; --brick:#D9705A; --brick-2:#E89277; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --leather:#3B2A1F; --leather-deep:#2A1D15; --on-leather:#EADFD0; --stitch:#7C6450;
+  --leather:#4A3A2B; --leather-deep:#2C2118; --on-leather:#EADFD0; --on-tab:#EADFD0; --stitch:#A8896A;
   --paper:#25201C; --paper-2:#2E2823; --ink:#EDE5DA; --ink-soft:#AA9D8F; --line:#40372F;
   --red:#E06A5E; --red-soft:#43231F; --good:#93C08F; --good-soft:#243423; --warn:#E2B354; --warn-soft:#3D301A; --brick:#D9705A; --brick-2:#E89277; color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;
   background-color:var(--leather);
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .045' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .1 0 0 0 .55 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .14 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E"),
     radial-gradient(ellipse at 30% 0%,rgba(255,255,255,.08),transparent 60%);
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:20px 56px}
@@ -44,7 +45,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance}
 
 .cover{color:var(--on-leather);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0 18px;text-align:center}
-.cover .eyebrow{font-size:11px;letter-spacing:.32em;opacity:.8}
+.cover .eyebrow{font-size:11px;letter-spacing:.32em;opacity:.75}
 .cover h1{font-size:34px;letter-spacing:.3em;margin-right:-.3em;font-weight:400}
 .cover .sub{font-size:13px;opacity:.85}
 .orn{display:block;color:var(--stitch)} .orn.red{color:var(--red)}
@@ -52,7 +53,7 @@ h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance}
 .tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;
   background:var(--leather-deep);padding:8px 8px 0;border-radius:6px 6px 0 0}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:0 0 auto;border:0;background:transparent;color:var(--on-leather);opacity:.75;padding:8px 13px 9px;font:inherit;font-size:14px;letter-spacing:.1em;border-radius:6px 6px 0 0;cursor:pointer}
+.tab{flex:0 0 auto;border:0;background:transparent;color:var(--on-tab);opacity:.75;padding:8px 13px 9px;font:inherit;font-size:14px;letter-spacing:.1em;border-radius:6px 6px 0 0;cursor:pointer}
 .tab[aria-selected="true"]{background:var(--paper);color:var(--ink);opacity:1;box-shadow:inset 0 2px 0 var(--red)}
 .tab:focus-visible{outline:2px solid var(--stitch);outline-offset:-2px}
 
