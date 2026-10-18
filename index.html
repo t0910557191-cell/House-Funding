@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="一磚一瓦">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
 <title>一磚一瓦</title>
+<script>try{var th=JSON.parse(localStorage.getItem("yzyw:theme")||'"light"');if(th==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",th==="dark"?"dark":"light");}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap">
 <style>
@@ -289,6 +290,7 @@ table{border-top:1px solid var(--ink)} .tbl{border:0}
 th{letter-spacing:.2em}
 tr.cur td{background:var(--red-soft)}
 #house use{display:none}
+:root[data-theme="light"]{color-scheme:light}
 @media (max-width:640px){.kpi:nth-child(odd){border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--line)}.cover h1{font-size:34px}.hero .big{font-size:38px}}
 </style>
 </head>
@@ -408,7 +410,8 @@ tr.cur td{background:var(--red-soft)}
       <form id="set-form" class="form">
         <fieldset><legend>個人化</legend><div class="fgrid">
           <div class="field"><label for="st-owner">名字</label><input id="st-owner" type="text"></div>
-          <div class="field"><label for="st-book">手帳名稱</label><input id="st-book" type="text"></div></div></fieldset>
+          <div class="field"><label for="st-book">手帳名稱</label><input id="st-book" type="text"></div>
+          <div class="field"><label for="st-theme">外觀</label><select id="st-theme"><option value="light">淺色（米白底）</option><option value="dark">深色</option><option value="auto">跟隨手機設定</option></select><span class="hint">只套用在這台裝置</span></div></div></fieldset>
         <fieldset><legend>計畫期間</legend><div class="fgrid">
           <div class="field"><label for="st-start">第一個記錄月份</label><input id="st-start" type="month"></div>
           <div class="field"><label for="st-end">買房目標月份</label><input id="st-end" type="month"></div></div></fieldset>
@@ -716,16 +719,22 @@ $("ms-add").onclick=()=>{S.ms.push({d:addM(nowYM,1),t:"新的里程碑"});persis
 
 /* ===== house hero ===== */
 function drawHouse(t){const house=t.aTd+t.aEtf,tg=+S.houseTarget||1,prog=Math.max(0,Math.min(1,house/tg));
-  const X0=34,X1=206,Y0=104,Y1=200,rows=12,bh=(Y1-Y0)/rows,bw=17.2;let bricks=[];
-  for(let r=0;r<rows;r++){const y=Y1-(r+1)*bh,off=r%2?bw/2:0;for(let x=X0-off;x<X1;x+=bw){const x0=Math.max(X0,x),x1=Math.min(X1,x+bw);if(x1-x0>3)bricks.push([x0,y,x1-x0]);}}
-  const N=bricks.length,filled=Math.round(prog*N);
-  let s=`<rect x="0" y="0" width="240" height="220" fill="none"/>`;
-  s+=`<line x1="10" y1="${Y1+1}" x2="230" y2="${Y1+1}" stroke="var(--ink-soft)" stroke-width="1.5" stroke-linecap="round"/>`;
-  s+=`<rect x="160" y="40" width="16" height="36" fill="var(--ink)"/>`;
-  s+=bricks.map(([x,y,w],i)=>{const on=i<filled;return `<rect class="brick${on&&i===filled-1?" new":""}" x="${(x+.8).toFixed(1)}" y="${(y+.8).toFixed(1)}" width="${(w-1.6).toFixed(1)}" height="${(bh-1.6).toFixed(1)}" rx="1.5" fill="${on?(i%3?"var(--brick)":"var(--brick-2)"):"var(--paper)"}" stroke="${on?"none":"var(--line)"}" stroke-width="1"/>`;}).join("");
-  s+=`<polygon points="20,${Y0+2} 120,26 220,${Y0+2}" fill="var(--ink)"/><polygon points="34,${Y0} 120,38 206,${Y0}" fill="var(--ink)"/>`;
-  s+=`<use href="#star" x="108" y="62" width="24" height="24" style="color:var(--stitch)"/>`;
-  s+=`<rect x="108" y="${Y1-36}" width="24" height="36" rx="12" ry="12" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2"/><rect x="108" y="${Y1-18}" width="24" height="18" fill="var(--paper-2)" stroke="none"/><line x1="108" y1="${Y1}" x2="108" y2="${Y1-24}" stroke="var(--ink)" stroke-width="2"/><line x1="132" y1="${Y1}" x2="132" y2="${Y1-24}" stroke="var(--ink)" stroke-width="2"/><circle cx="127" cy="${Y1-17}" r="1.8" fill="var(--ink)"/>`;
+  const X0=50,X1=190,Y0=104,Y1=196,rows=11,bh=(Y1-Y0)/rows,bw=17.5,INK="var(--ink)";
+  const holes=[[64,118,26,30],[150,118,26,30],[106,150,28,46]];
+  const inHole=(x,y,w,h)=>holes.some(([hx,hy,hw,hh])=>x>=hx-1&&x+w<=hx+hw+1&&y>=hy-1&&y+h<=hy+hh+1);
+  let bricks=[];for(let r=0;r<rows;r++){const y=Y1-(r+1)*bh,off=r%2?bw/2:0;for(let x=X0-off;x<X1;x+=bw){const x0=Math.max(X0,x),x1=Math.min(X1,x+bw);if(x1-x0>4&&!inHole(x0,y,x1-x0,bh))bricks.push([x0,y,x1-x0]);}}
+  const N=bricks.length,filled=Math.round(prog*N),tone=i=>((i*37)%7)<2?"var(--brick-2)":"var(--brick)";
+  const hp=holes.map(([x,y,w,h],i)=>i===2?`M${x} ${y+h}V${y+w/2}A${w/2} ${w/2} 0 0 1 ${x+w} ${y+w/2}V${y+h}Z`:`M${x} ${y}h${w}v${h}h${-w}Z`).join("");
+  let s=`<defs><clipPath id="hwall"><path clip-rule="evenodd" d="M${X0} ${Y0}H${X1}V${Y1}H${X0}Z${hp}"/></clipPath></defs>`;
+  s+=`<path d="M24 ${Y1+.5}H216" stroke="${INK}" stroke-width="1.2"/><path d="M10 ${Y1+.5}H20M220 ${Y1+.5}H230" stroke="var(--ink-soft)" stroke-width="1"/>`;
+  s+=`<path d="M206 ${Y1}V168" stroke="${INK}" stroke-width="1.2"/><ellipse cx="206" cy="156" rx="11" ry="16" fill="var(--good-soft)" stroke="${INK}" stroke-width="1.2"/><path d="M206 172V150M206 160l-5-5M206 156l5-5" stroke="${INK}" stroke-width=".9" fill="none"/>`;
+  s+=`<rect x="150" y="50" width="14" height="36" fill="var(--paper)" stroke="${INK}" stroke-width="1.4"/><path d="M147 50H167" stroke="${INK}" stroke-width="2"/>`;
+  s+=`<g clip-path="url(#hwall)">`+bricks.map(([x,y,w],i)=>{const on=i<filled;return `<rect class="brick${on&&i===filled-1&&prog<1?" new":""}" x="${(x+.9).toFixed(1)}" y="${(y+.9).toFixed(1)}" width="${(w-1.8).toFixed(1)}" height="${(bh-1.8).toFixed(1)}" rx=".6" fill="${on?tone(i):"none"}" stroke="${on?"none":"var(--line)"}" stroke-width=".8"/>`;}).join("")+`</g>`;
+  s+=`<rect x="${X0}" y="${Y0}" width="${X1-X0}" height="${Y1-Y0}" fill="none" stroke="${INK}" stroke-width="1.4"/>`;
+  s+=`<path d="M38 ${Y0+2}L120 40L202 ${Y0+2}" fill="none" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><path d="M50 ${Y0}L120 49L190 ${Y0}Z" fill="${prog>=1?"var(--red-soft)":"var(--paper)"}" stroke="${INK}" stroke-width="1"/>`;
+  s+=`<circle cx="120" cy="80" r="9" fill="var(--paper-2)" stroke="${INK}" stroke-width="1.2"/><path d="M111 80H129M120 71V89" stroke="${INK}" stroke-width=".7"/>`;
+  holes.slice(0,2).forEach(([x,y,w,h])=>{s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--paper-2)" stroke="${INK}" stroke-width="1.3"/><path d="M${x+w/2} ${y}V${y+h}M${x} ${y+h*.45}H${x+w}" stroke="${INK}" stroke-width=".7"/><path d="M${x-3} ${y+h+1.5}H${x+w+3}" stroke="${INK}" stroke-width="2"/>`;});
+  {const [x,y,w,h]=holes[2];s+=`<path d="M${x} ${y+h}V${y+w/2}A${w/2} ${w/2} 0 0 1 ${x+w} ${y+w/2}V${y+h}" fill="var(--red)" stroke="${INK}" stroke-width="1.3"/><circle cx="${x+w-6}" cy="${y+h*.6}" r="1.4" fill="var(--paper)"/><path d="M${x-4} ${Y1}H${x+w+4}" stroke="${INK}" stroke-width="2.2"/>`;}
   $("house").innerHTML=s;
   $("hero-big").innerHTML=`${filled}<small>/ ${N} 塊磚</small>`;
   $("hero-sub").textContent=`${wan(house)}・每塊磚約 ${fmt(tg/N)} 元${prog>=1?"・房子蓋好了！":""}`;
@@ -946,7 +955,9 @@ function applySettings(msg){const n=clone(S);
   renameEverywhere(n,"etfName","0050");renameEverywhere(n,"tdName","定存");renameEverywhere(n,"efName","高利數位帳戶");
   S=n;persistSettings(msg);}
 $("set-form").addEventListener("submit",e=>{e.preventDefault();applySettings("設定已儲存");});
-$("set-form").addEventListener("change",e=>{if(e.target.matches("input,select"))applySettings("已自動儲存");});
+$("set-form").addEventListener("change",e=>{if(e.target.id==="st-theme")return;if(e.target.matches("input,select"))applySettings("已自動儲存");});
+$("st-theme").value=LS.get("yzyw:theme","light");
+$("st-theme").onchange=e=>{const v=e.target.value;LS.set("yzyw:theme",v);const r=document.documentElement;if(v==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",v);toast(v==="light"?"已改為淺色":v==="dark"?"已改為深色":"已改為跟隨手機設定");};
 $("st-reset").onclick=()=>{$("st-reset-confirm").hidden=false;};
 $("st-reset-yes").onclick=()=>{const keep={owner:S.owner,book:S.book,ms:S.ms,overrides:S.overrides,lastExport:S.lastExport};S={...clone(DEFAULTS),...keep};fillSettings();$("st-reset-confirm").hidden=true;persistSettings("已回到預設值");};
 
