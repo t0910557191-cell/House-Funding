@@ -291,6 +291,23 @@ th{letter-spacing:.2em}
 tr.cur td{background:var(--red-soft)}
 #house use{display:none}
 :root[data-theme="light"]{color-scheme:light}
+.ladder{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.step{display:flex;flex-direction:column;gap:1px;font-size:12px;color:var(--ink-soft);min-width:0}
+.step .sbar{height:4px;background:var(--paper-2);position:relative;overflow:hidden;margin-bottom:7px}
+.step .sbar i{position:absolute;inset:0 auto 0 0;background:var(--red)}
+.step b{font-family:var(--display);font-weight:400;font-size:17px;color:var(--ink);white-space:nowrap}
+.step.on b{color:var(--red)}
+.principle{gap:6px}
+.principle .src{font-size:11px;letter-spacing:.24em;color:var(--red)}
+.principle b{font-family:"Noto Serif TC",serif;font-size:17px;font-weight:500;line-height:1.65}
+.principle .row{justify-content:space-between}
+.checks.plain li{grid-template-columns:minmax(0,1fr) minmax(0,auto)}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.refl-h{font-family:"Noto Serif TC",serif;font-size:14px;letter-spacing:.14em;padding-top:12px;border-top:1px solid var(--line)}
+.vals{display:flex;flex-wrap:wrap;gap:6px}
+.vals span{border:1px solid var(--line);padding:3px 12px;font-size:13px}
+textarea{min-height:110px;resize:vertical;line-height:1.6}
+@media (max-width:640px){.ladder{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px}}
 @media (max-width:640px){.kpi:nth-child(odd){border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--line)}.cover h1{font-size:34px}.hero .big{font-size:38px}}
 </style>
 </head>
@@ -312,10 +329,12 @@ tr.cur td{background:var(--red-soft)}
 
     <section class="page" data-page="overview" aria-label="總覽">
       <div class="page-head"><h2><svg width="16" height="16" class="orn red"><use href="#star"/></svg>總覽</h2><button class="btn ghost" id="ov-rec">詳細記錄</button></div>
+      <div class="sec"><h3>一輩子・自由</h3><div class="kpis" id="ov-life"></div><div id="ov-ladder"></div><span class="muted" id="ov-ladder-note"></span></div>
       <div class="hero"><svg id="house" viewBox="0 0 240 220" role="img" aria-label="買房基金進度"></svg>
-        <div class="hero-txt"><span class="muted">買房基金已砌好</span><span class="big num" id="hero-big"></span><span class="muted" id="hero-sub"></span>
+        <div class="hero-txt"><span class="muted" id="hero-lbl">買房基金已砌好</span><span class="big num" id="hero-big"></span><span class="muted" id="hero-sub"></span>
           <div class="row" id="hero-actions"><button class="btn red" id="quick-done">本月照計畫完成</button></div></div></div>
       <div class="sec"><h3>這個月的提醒</h3><ul class="alerts" id="ov-alerts"></ul></div>
+      <div class="callout principle" id="ov-principle"></div>
       <div class="kpis" id="ov-kpis"></div>
       <div class="callout" id="ov-forecast"></div>
       <div class="sec"><h3>累積走勢</h3>
@@ -358,6 +377,7 @@ tr.cur td{background:var(--red-soft)}
         <div class="legend"><span><i style="background:var(--line)"></i>計畫</span><span><i style="background:var(--red)"></i>實際</span></div>
         <div id="m-cmp"></div></div>
       <div class="sec" id="m-spend-sec"><h3>花費組成</h3><div id="m-spend"></div></div>
+      <div class="sec" id="m-refl-sec"><h3>花錢的反思</h3><div id="m-refl"></div></div>
       <div class="callout" id="m-note"></div>
       <div class="actions"><button class="btn red" id="m-edit">記錄這個月</button></div>
     </section>
@@ -375,14 +395,14 @@ tr.cur td{background:var(--red-soft)}
 
     <section class="page" data-page="sim" aria-label="模擬" hidden>
       <div class="page-head"><h2><svg width="16" height="16" class="orn red"><use href="#star"/></svg>情境模擬</h2><button class="btn ghost small" id="sim-reset">歸零</button></div>
-      <span class="muted">拉動看看，如果情況改變，買房基金會在什麼時候存到。這裡不會改到你的計畫。</span>
+      <span class="muted">拉動看看，如果情況改變，目前章節的目標會在什麼時候存到；也可以做壓力測試，看看出事時撐不撐得住。這裡不會改到你的計畫。</span>
       <div class="sec" id="sim-ctrls"></div>
       <div class="kpis" id="sim-kpis"></div>
-      <div class="sec"><h3>買房基金累積</h3>
+      <div class="sec"><h3 id="sim-h">買房基金累積</h3>
         <div class="legend"><span><i style="background:var(--ink-soft)"></i>目前計畫</span><span><i style="background:var(--red)"></i>模擬情境</span><span><i style="border:1px dashed var(--good)"></i>目標</span></div>
         <div class="chart"><svg id="sim-chart" viewBox="0 0 720 240" role="img" aria-label="模擬比較"></svg></div></div>
       <div class="actions"><button class="btn red" id="sim-apply">套用到我的計畫</button></div>
-      <div class="actions" id="sim-confirm" hidden><span class="muted">會改寫設定裡的月薪、獎金、花費與買房目標月份。</span><button class="btn danger small" id="sim-yes">確定套用</button></div>
+      <div class="actions" id="sim-confirm" hidden><span class="muted">會改寫設定裡的月薪、獎金、花費與目標月份（壓力測試不會套用）。</span><button class="btn danger small" id="sim-yes">確定套用</button></div>
     </section>
 
     <section class="page" data-page="assets" aria-label="資產" hidden>
@@ -392,17 +412,37 @@ tr.cur td{background:var(--red-soft)}
       <div class="sec"><div class="page-head"><h3>其他目標</h3><button class="btn ghost small" id="g-add">新增目標</button></div>
         <div class="chips" id="g-quick"></div><div id="goals" class="sec"></div></div>
       <div class="rule"></div>
-      <div class="sec"><h3>買房基金配置</h3>
+      <div class="sec"><h3 id="a-alloc-h">買房基金配置</h3>
         <div class="split"><div class="donut"><svg viewBox="0 0 120 120" id="a-donut"></svg><div class="c" id="a-donut-c"></div></div><div class="sec" id="a-alloc"></div></div></div>
       <div class="rule"></div>
       <div class="sec" id="a-td-sec"><h3 id="a-td-h">到期表</h3><div class="tbl"><table><thead><tr><th>到期月份</th><th>本金</th><th>存入月份</th></tr></thead><tbody id="a-td"></tbody></table></div>
         <span class="muted" id="a-td-note"></span></div>
     </section>
 
-    <section class="page" data-page="milestones" aria-label="里程碑" hidden>
-      <div class="page-head"><h2><svg width="16" height="16" class="orn red"><use href="#star"/></svg>里程碑</h2><button class="btn ghost" id="ms-add">新增</button></div>
-      <ul class="tl" id="ms"></ul>
-      <span class="muted">日期與內容都可以直接修改，改完自動儲存。</span>
+    <section class="page" data-page="milestones" aria-label="人生" hidden>
+      <div class="page-head"><h2><svg width="16" height="16" class="orn red"><use href="#star"/></svg>人生</h2></div>
+      <span class="muted">錢最大的價值，是讓你能自己決定時間怎麼用。這一頁看的是一輩子，不只是眼前的目標。</span>
+      <div class="sec"><h3>自由階梯</h3><div id="lf-ladder"></div><span class="muted" id="lf-note"></span></div>
+      <div class="sec"><h3>一輩子的累積</h3>
+        <div class="legend"><span><i style="background:var(--red)"></i>累積資產</span><span><i style="background:var(--ink);border-radius:50%"></i>有填月底總資產</span><span id="lf-enough-lg"><i style="border:1px dashed var(--good)"></i>夠了</span></div>
+        <div class="chart"><svg id="lf-chart" viewBox="0 0 720 240" role="img" aria-label="一輩子的累積資產"></svg></div>
+        <span class="muted">有填「月底總資產」的月份用實際數字，其他月份用每月存款往上加。買房或大筆支出後記得填一次。</span></div>
+      <div class="sec"><h3>我在乎的</h3><div id="lf-values"></div></div>
+      <div class="rule"></div>
+      <div class="sec"><h3>人生章節</h3><div id="ch-list" class="sec"></div>
+        <div class="actions"><button type="button" class="btn ghost" id="ch-next">完成這一章，開始下一章</button></div>
+        <div class="form" id="ch-form" hidden>
+          <div class="fgrid">
+            <div class="field"><label for="ch-name">新章節名稱</label><input id="ch-name" type="text" placeholder="例如：第二章：移民"></div>
+            <div class="field"><label for="ch-fund">這一章要存的目標</label><input id="ch-fund" type="text" placeholder="例如：移民基金"></div>
+            <div class="field"><label for="ch-target">目標金額</label><input id="ch-target" type="number" inputmode="numeric"></div>
+            <div class="field"><label for="ch-end">目標月份</label><input id="ch-end" type="month"></div></div>
+          <span class="muted">目前這一章會存檔保留。新章節從下一個還沒記錄的月份開始，緊急預備金與所有紀錄都會延續。月薪、花費等計畫數字可以之後到設定調整。</span>
+          <div class="actions"><button type="button" class="btn ghost" id="ch-cancel">取消</button><button type="button" class="btn red" id="ch-go">開始新章節</button></div></div></div>
+      <div class="rule"></div>
+      <div class="sec"><div class="page-head"><h3>里程碑</h3><button class="btn ghost small" id="ms-add">新增</button></div>
+        <ul class="tl" id="ms"></ul>
+        <span class="muted">日期與內容都可以直接修改，改完自動儲存。</span></div>
     </section>
 
     <section class="page" data-page="settings" aria-label="設定" hidden>
@@ -412,9 +452,17 @@ tr.cur td{background:var(--red-soft)}
           <div class="field"><label for="st-owner">名字</label><input id="st-owner" type="text"></div>
           <div class="field"><label for="st-book">手帳名稱</label><input id="st-book" type="text"></div>
           <div class="field"><label for="st-theme">外觀</label><select id="st-theme"><option value="light">淺色（米白底）</option><option value="dark">深色</option><option value="auto">跟隨手機設定</option></select><span class="hint">只套用在這台裝置</span></div></div></fieldset>
+        <fieldset><legend>一輩子</legend><div class="fgrid">
+          <div class="field"><label for="st-chapter">目前章節名稱</label><input id="st-chapter" type="text"></div>
+          <div class="field"><label for="st-fund">這一章要存的目標</label><input id="st-fund" type="text" placeholder="例如：買房基金"></div>
+          <div class="field"><label for="st-living">每月必要開銷（你負擔的部分）</label><input id="st-living" type="number" inputmode="numeric"><span class="hint" id="st-living-h">留空＝個人花費＋共同戶頭。用來算「自由」可以撐幾個月。</span></div>
+          <div class="field"><label for="st-joy">每月快樂預算</label><input id="st-joy" type="number" inputmode="numeric"><span class="hint">花在讓你開心的事，不需要罪惡感的錢。</span></div>
+          <div class="field"><label for="st-enough">「夠了」的金額</label><input id="st-enough" type="number" inputmode="numeric" placeholder="選填"><span class="hint">存到這裡，你就不需要再追更多。</span></div>
+          <div class="field"><label for="st-enoughnote">「夠了」的生活長什麼樣子</label><input id="st-enoughnote" type="text" placeholder="例如：每天陪孩子吃晚餐，不必為錢加班"></div>
+          <div class="field full"><label for="st-values">我的金錢價值觀（一行一個）</label><textarea id="st-values"></textarea><span class="hint">記錄花費時會提醒你，AI 顧問也會依這些給建議。</span></div></div></fieldset>
         <fieldset><legend>計畫期間</legend><div class="fgrid">
           <div class="field"><label for="st-start">第一個記錄月份</label><input id="st-start" type="month"></div>
-          <div class="field"><label for="st-end">買房目標月份</label><input id="st-end" type="month"></div></div></fieldset>
+          <div class="field"><label for="st-end" id="st-end-l">買房目標月份</label><input id="st-end" type="month"></div></div></fieldset>
         <fieldset><legend>收入與支出</legend><div class="fgrid">
           <div class="field"><label for="st-salary">月薪</label><input id="st-salary" type="number" inputmode="numeric"></div>
           <div class="field"><label for="st-spend">個人每月花費預算</label><input id="st-spend" type="number" inputmode="numeric"></div>
@@ -439,7 +487,7 @@ tr.cur td{background:var(--red-soft)}
           <div class="field"><label for="st-tdterm">穩健工具到期期數（月，0＝沒有到期日）</label><input id="st-tdterm" type="number" min="0"></div></div></fieldset>
         <fieldset><legend>目標</legend><div class="fgrid">
           <div class="field"><label for="st-ef">緊急預備金</label><input id="st-ef" type="number" inputmode="numeric"></div>
-          <div class="field"><label for="st-house">買房基金</label><input id="st-house" type="number" inputmode="numeric"></div>
+          <div class="field"><label for="st-house" id="st-house-l">買房基金</label><input id="st-house" type="number" inputmode="numeric"></div>
           <div class="field"><label for="st-rate">存款率 %</label><input id="st-rate" type="number"></div></div></fieldset>
         <fieldset><legend>提醒</legend><div class="fgrid">
           <div class="field"><label for="st-pay">發薪日</label><select id="st-pay"></select></div>
@@ -484,6 +532,13 @@ tr.cur td{background:var(--red-soft)}
       <div class="full" id="f-goals"></div>
       <div class="field"><label for="f-override">調整這個月的計畫存款（選填）</label><input id="f-override" type="number" inputmode="numeric" placeholder="留空＝依設定"></div>
       <div class="field full"><label for="f-note">備註</label><input id="f-note" type="text"></div>
+      <div class="field full"><label for="f-nw">月底總資產（選填）</label><input id="f-nw" type="number" inputmode="numeric"><span class="hint">所有存款與投資加起來。買房或大筆支出後填一次，自由指標才準。</span></div>
+      <div class="full refl-h">花錢的反思</div>
+      <div class="full muted" id="f-values"></div>
+      <div class="field"><label for="f-joy">快樂花費（無罪惡感）</label><input id="f-joy" type="number" inputmode="numeric"></div>
+      <div class="field"><label for="f-feel">這個月的錢花得</label><select id="f-feel"><option value="">—</option><option value="3">很值得</option><option value="2">普通</option><option value="1">有點後悔</option></select></div>
+      <div class="field full"><label for="f-best">最值得的一筆花費</label><input id="f-best" type="text" placeholder="例如：週末帶孩子去動物園"></div>
+      <div class="field full"><label for="f-regret">最後悔的一筆花費</label><input id="f-regret" type="text" placeholder="沒有也很好"></div>
     </div>
     <div class="calc"><span>本月存款 <b class="num" id="c-save">0</b></span><span class="muted">可存 <span class="num" id="c-free">0</span></span><span class="num" id="c-rate"></span></div>
     <div class="actions">
@@ -518,12 +573,14 @@ const addM=(ym,k)=>{let [y,m]=ym.split("-").map(Number);m+=k;y+=Math.floor((m-1)
 function range(a,b){const r=[];if(!a||!b||a>b)return r;let s=a;while(s<=b&&r.length<600){r.push(s);s=addM(s,1);}return r;}
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}}};
-let tt;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2400);}
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,Math.max(2400,String(m).length*110));}
 
 /* ===== state ===== */
 const DEFAULTS={owner:"Emma",book:"一磚一瓦",start:"2026-11",end:"2029-10",salary:60000,spend:15000,j1:50,j2:33.3,jSwitch:"2027-11",
   bonus:280000,bonusMonth:2,bonus2:0,bonusMonth2:0,kidFrom:"2028-07",kidTo:"2029-06",kidSave:12000,efName:"高利數位帳戶",tdName:"定存",etfName:"0050",etfPct:30,etfStop:"2028-10",tdTerm:12,
   efTarget:200000,houseTarget:1300000,rateTarget:30,payDay:5,recordDay:7,devLine:85,overrides:{},goals:[],
+  chapterName:"第一章：買房",fundName:"買房基金",living:0,joyBudget:2000,enough:0,enoughNote:"",chapters:[],
+  values:"和家人在一起的時間\n健康\n孩子的教育\n自己決定時間的自由",
   ms:[{d:"2027-02",t:"第一筆獎金放進買房基金"},{d:"2027-03",t:"緊急預備金存滿"},{d:"2027-11",t:"共同戶頭改為 1/3"},
       {d:"2028-07",t:"迎接第二胎"},{d:"2028-10",t:"停買 0050，全放定存"},{d:"2029-04",t:"0050 分批轉入定存"},
       {d:"2029-10",t:"開始看房"},{d:"2038-07",t:"移民加拿大"}]};
@@ -532,7 +589,9 @@ let S=clone(DEFAULTS),A={},ADV=null;
 const ETF=()=>esc(S.etfName||"ETF");
 const TD=()=>esc(S.tdName||"定存");
 const EFN=()=>esc(S.efName||"緊急預備金帳戶");
-function normalize(s){const n={...clone(DEFAULTS),...(s||{})};if(!Array.isArray(n.ms))n.ms=clone(DEFAULTS.ms);if(!n.overrides||typeof n.overrides!=="object")n.overrides={};if(!Array.isArray(n.goals))n.goals=[];return n;}
+const FUND=()=>esc(S.fundName||"買房基金");
+const VALS=()=>String(S.values||"").split(/\n/).map(x=>x.trim()).filter(Boolean);
+function normalize(s){const n={...clone(DEFAULTS),...(s||{})};if(!Array.isArray(n.ms))n.ms=clone(DEFAULTS.ms);if(!n.overrides||typeof n.overrides!=="object")n.overrides={};if(!Array.isArray(n.goals))n.goals=[];if(!Array.isArray(n.chapters))n.chapters=[];return n;}
 
 /* ===== store: Claude 雲端 db，或本機瀏覽器 ===== */
 const Store={db:null,dl:null,
@@ -556,7 +615,8 @@ function planOf(ym){const mo=+ym.slice(5),joint=Math.round(S.salary*(ym<S.jSwitc
   const bonus=(mo===+S.bonusMonth?+S.bonus:0)+(+S.bonusMonth2&&mo===+S.bonusMonth2?+S.bonus2||0:0);
   const base=kid?+S.kidSave:Math.max(0,S.salary-joint-S.spend),ov=S.overrides[ym],has=ov!=null&&ov!=="";
   return {ym,joint,bonus,income:+S.salary+bonus,spend:+S.spend,save:has?+ov:base+bonus,over:has};}
-function buildPlan(){let ef=0;const gl={};return range(S.start,S.end).map(ym=>{const p=planOf(ym);let r=p.save;
+function buildPlan(){const before=Object.keys(A).filter(m=>m<S.start);let ef=before.reduce((s,m)=>s+(+A[m].ef||0),0);const gl={};
+  before.forEach(m=>Object.entries(A[m].g||{}).forEach(([k,v])=>gl[k]=(gl[k]||0)+(+v||0)));return range(S.start,S.end).map(ym=>{const p=planOf(ym);let r=p.save;
   p.ef=Math.min(r,Math.max(0,S.efTarget-ef));ef+=p.ef;r-=p.ef;p.g={};
   S.goals.forEach(g=>{const left=Math.max(0,(+g.target||0)-(+g.initial||0)-(gl[g.id]||0));if(+g.monthly>0&&(!g.due||ym<=g.due)&&left>0){const a=Math.min(r,+g.monthly,left);if(a>0){p.g[g.id]=a;gl[g.id]=(gl[g.id]||0)+a;r-=a;}}});
   p.etf=ym<S.etfStop?Math.round(r*S.etfPct/100):0;p.td=r-p.etf;return p;});}
@@ -564,11 +624,12 @@ function planMap(){const pl=buildPlan(),m={};pl.forEach(p=>m[p.ym]=p);return {pl
 const gsum=a=>Object.values((a&&a.g)||{}).reduce((s,v)=>s+(+v||0),0);
 const saved=a=>a?(+a.ef||0)+(+a.td||0)+(+a.etf||0)+gsum(a):null;
 const status=r=>r==null?["none","未記錄"]:r>=1?["ok","達標"]:r>=.8?["near","接近"]:["low","落後"];
-function totals(){const P=planMap(),rec=Object.keys(A).sort(),upto=[rec[rec.length-1],nowYM].filter(Boolean).sort().pop();
+function totals(){const P=planMap(),all=Object.keys(A).sort(),rec=all.filter(m=>m>=S.start),upto=[rec[rec.length-1],nowYM].filter(Boolean).sort().pop();
   const t={P,rec,upto,cP:0,cA:0,pEf:0,pH:0,aEf:0,aTd:0,aEtf:0,inc:0,etfVal:null,etfValM:null};
   P.pl.forEach(p=>{if(p.ym<=upto){t.cP+=p.save;t.pEf+=p.ef;t.pH+=p.td+p.etf;}});
-  rec.forEach(m=>{const a=A[m];t.cA+=saved(a);t.aEf+=+a.ef||0;t.aTd+=+a.td||0;t.aEtf+=+a.etf||0;t.inc+=+a.income||0;if(+a.val>0){t.etfVal=+a.val;t.etfValM=m;}});
-  t.gA={};t.gP={};S.goals.forEach(g=>{t.gA[g.id]=(+g.initial||0)+rec.reduce((s,m)=>s+(+((A[m].g||{})[g.id])||0),0);t.gP[g.id]=(+g.initial||0)+P.pl.filter(p=>p.ym<=upto).reduce((s,p)=>s+(p.g[g.id]||0),0);});
+  all.forEach(m=>t.aEf+=+A[m].ef||0);
+  rec.forEach(m=>{const a=A[m];t.cA+=saved(a);t.aTd+=+a.td||0;t.aEtf+=+a.etf||0;t.inc+=+a.income||0;if(+a.val>0){t.etfVal=+a.val;t.etfValM=m;}});
+  t.gA={};t.gP={};S.goals.forEach(g=>{t.gA[g.id]=(+g.initial||0)+all.reduce((s,m)=>s+(+((A[m].g||{})[g.id])||0),0);t.gP[g.id]=(+g.initial||0)+P.pl.filter(p=>p.ym<=upto).reduce((s,p)=>s+(p.g[g.id]||0),0);});
   return t;}
 function forecastOf(t){const house=t.aTd+t.aEtf,recent=t.rec.slice(-12);
   const pace=recent.length?recent.reduce((s,m)=>s+(+A[m].td||0)+(+A[m].etf||0),0)/recent.length:0;
@@ -577,13 +638,74 @@ function forecastOf(t){const house=t.aTd+t.aEtf,recent=t.rec.slice(-12);
 function deviation(t){const R=[];let sev=0;if(!t.rec.length)return {lv:"none",reasons:["還沒有紀錄"]};
   const rate=t.cP?t.cA/t.cP:1,f=forecastOf(t),line=(+S.devLine||85)/100;
   if(rate<line){sev=2;R.push(`累積達成率 ${pct(rate)}，落後 ${fmt(t.cP-t.cA)}`);}else if(rate<Math.min(.97,line+.1)){sev=1;R.push(`累積達成率 ${pct(rate)}`);}
-  if(f.eta&&f.eta>S.end){const lag=range(S.end,f.eta).length-1;sev=Math.max(sev,lag>=3?2:1);R.push(`預估 ${label(f.eta)} 才存到買房基金，晚 ${lag} 個月`);}
+  if(f.eta&&f.eta>S.end){const lag=range(S.end,f.eta).length-1;sev=Math.max(sev,lag>=3?2:1);R.push(`預估 ${label(f.eta)} 才存到${FUND()}，晚 ${lag} 個月`);}
   const l2=t.rec.slice(-2);if(l2.length===2&&l2.every(m=>(+A[m].spend||0)>S.spend*1.2)){sev=2;R.push("連續 2 個月花費超出預算兩成以上");}
   if(t.inc&&t.cA/t.inc<S.rateTarget/100*.7){sev=Math.max(sev,1);R.push(`存款率 ${pct(t.cA/t.inc)}，低於目標 ${S.rateTarget}%`);}
   return {lv:["ok","notice","severe"][sev],reasons:R.length?R:["進度符合計畫"]};}
 
+/* ===== lifetime ===== */
+const LADDER=[[3,"安心"],[6,"有底氣"],[12,"能換跑道"],[24,"能休息一年"],[60,"能大轉彎"],[120,"自由"]];
+function livingCost(){return +S.living>0?+S.living:(+S.spend||0)+Math.round((+S.salary||0)*(nowYM<S.jSwitch?S.j1:S.j2)/100);}
+function lifeOf(t){const ks=Object.keys(A).sort();let est=S.goals.reduce((s,g)=>s+(+g.initial||0),0),flows=0,lastReal=null;const pts=[];
+  ks.forEach(m=>{const a=A[m],sv=saved(a)||0;flows+=sv;est+=sv;if(+a.nw>0){est=+a.nw;lastReal=m;}pts.push({m,v:est,real:+a.nw>0});});
+  let assets=est;if(t.etfVal!=null&&(!lastReal||t.etfValM>lastReal))assets+=t.etfVal-t.aEtf;
+  const L=Math.max(1,livingCost());return {pts,assets,flows,L,months:assets/L,n:ks.length};}
+function ladderHTML(lf){let prev=0;return `<div class="ladder">`+LADDER.map(([m,n])=>{const f=Math.max(0,Math.min(1,(lf.months-prev)/(m-prev)));prev=m;
+  return `<div class="step ${f>=1?"on":""}"><span class="sbar"><i style="width:${(f*100).toFixed(1)}%"></i></span><b class="num">${m>=12?m/12+" 年":m+" 個月"}</b><span>${n}</span></div>`;}).join("")+`</div>`;}
+function ladderNote(lf){const nx=LADDER.find(([m])=>lf.months<m);
+  return nx?`你的資產能撐 ${fmtMonths(lf.months)}（每月 ${fmt(lf.L)}）。再存約 ${wan((nx[0]-lf.months)*lf.L)}，就到「${nx[1]}」。`:`你的資產能撐 ${fmtMonths(lf.months)}，已經走到階梯頂端。`;}
+const fmtMonths=m=>m<12?(Math.floor(m*10)/10)+" 個月":(Math.floor(m/12*10)/10)+" 年";
+const PRINCIPLES=[
+  ["致富心態","錢最大的價值，是讓你能自己決定時間怎麼用。","看看「自由」那一格：你現在能撐多久不必為錢工作？"],
+  ["致富心態","財富是你沒花掉的錢，看不見的那部分才是真的。","別人看不到你的存款，但它在默默替你買選擇權。"],
+  ["致富心態","複利最需要的不是高報酬，而是很長的時間。持續，比厲害重要。","每個月準時記錄一次，比哪一個月存特別多更重要。"],
+  ["致富心態","計畫一定會出錯，所以要留下犯錯的空間。","到「模擬」按一次「失業 6 個月」，看看預備金撐不撐得住。"],
+  ["致富心態","最難的理財能力，是知道什麼時候「夠了」。目標一直往後移，就永遠到不了。","到設定寫下你的「夠了」，以及那樣的生活長什麼樣子。"],
+  ["致富心態","存錢不一定需要理由。為看不見的意外和機會而存，本身就是目的。","沒有被分配到目標的錢，也是在替你買安心。"],
+  ["致富心態","你睡得著的計畫，比數學上最完美的計畫撐得更久。","如果某個數字讓你焦慮，就把它調到你能長期做到的樣子。"],
+  ["致富心態","市場波動是長期報酬的入場費，不是罰款。","ETF 跌的時候，照計畫繼續存，不必每天看市值。"],
+  ["花錢的藝術","花錢是價值觀的展現。花在你在乎的事情上，不需要罪惡感。","這個月的快樂預算，有花在你真正在乎的事情上嗎？"],
+  ["花錢的藝術","最貴的往往不是東西，而是別人的期待。分清楚是你想要，還是覺得應該要。","記錄時寫下最後悔的一筆，看看它是為了自己，還是為了別人的眼光。"],
+  ["花錢的藝術","最好的花費，常常是買到時間、健康，和跟重要的人在一起的機會。","回頭看「最值得的一筆」，它們大多長什麼樣子？"],
+  ["花錢的藝術","滿足感來自期待和現實之間的距離。管好期待，和多賺一點一樣有用。","生活變好時，花費不必跟著一起往上爬。"]];
+let pIdx=null;
+function renderPrinciple(){if(pIdx==null){const [y,m]=nowYM.split("-").map(Number);pIdx=(y*12+m)%PRINCIPLES.length;}
+  const [src,txt,act]=PRINCIPLES[pIdx];
+  $("ov-principle").innerHTML=`<span class="src">本月的金錢原則・《${src}》</span><b>${txt}</b><div class="row"><span class="muted">${act}</span><button type="button" class="btn ghost small" id="pr-next">下一則</button></div>`;
+  $("pr-next").onclick=()=>{pIdx=(pIdx+1)%PRINCIPLES.length;renderPrinciple();};}
+function renderLifeOverview(t){const lf=lifeOf(t),en=+S.enough||0,cur=A[nowYM],jb=+S.joyBudget||0;
+  $("ov-life").innerHTML=kpi("自由",lf.n?fmtMonths(lf.months):"—",`不工作也撐得住・每月 ${fmt(lf.L)}`,true)+kpi("一輩子存下",lf.n?wan(lf.assets):"—",lf.n?`${lf.n} 個月的紀錄`:"從第一筆紀錄開始")+
+    kpi("夠了",en?pct(lf.assets/en):"未設定",en?`${wan(lf.assets)} / ${wan(en)}`:"到設定寫下你的數字")+
+    kpi("快樂預算",jb?(cur?fmt(+cur.joy||0):"—")+` / ${fmt(jb)}`:"未設定",cur?"這個月花在讓你開心的事":"記錄時填寫");
+  $("ov-ladder").innerHTML=ladderHTML(lf);$("ov-ladder-note").textContent=lf.n?ladderNote(lf):"記錄第一個月後，這裡會顯示你的資產能讓你撐多久不必為錢工作。";}
+function renderLife(t){const lf=lifeOf(t),en=+S.enough||0;
+  $("lf-ladder").innerHTML=ladderHTML(lf);$("lf-note").textContent=lf.n?ladderNote(lf):"還沒有紀錄。";
+  const svg=$("lf-chart"),P=lf.pts,W=720,H=240,L=50,R=12,T=16,B=28;$("lf-enough-lg").hidden=!en;
+  if(P.length<2){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="13" fill="var(--ink-soft)">記錄兩個月以上，這裡會畫出你一輩子的累積</text>`;}
+  else{const vmax=Math.max(...P.map(p=>p.v),1),showEn=en&&en<=vmax*2.5,max=(showEn?Math.max(vmax,en):vmax)*1.08,n=P.length,x=i=>L+i*(W-L-R)/(n-1),y=v=>T+(H-T-B)*(1-v/max);let g="";
+    [0,.5,1].forEach(f=>g+=`<line x1="${L}" x2="${W-R}" y1="${y(max*f)}" y2="${y(max*f)}" stroke="var(--line)"/><text x="${L-8}" y="${y(max*f)+4}" text-anchor="end" font-size="11" fill="var(--ink-soft)">${wan(max*f)}</text>`);
+    const every=n>48?Math.ceil(n/96)*12:12;P.forEach((p,i)=>{if(p.m.endsWith("-01")&&(+p.m.slice(0,4))%(every/12)===0)g+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--ink-soft)">${p.m.slice(0,4)}</text>`;});
+    if(showEn)g+=`<line x1="${L}" x2="${W-R}" y1="${y(en)}" y2="${y(en)}" stroke="var(--good)" stroke-dasharray="5 4"/><text x="${W-R}" y="${y(en)-6}" text-anchor="end" font-size="11" fill="var(--good)">夠了 ${wan(en)}</text>`;
+    g+=`<polygon fill="var(--red-soft)" points="${x(0)},${y(0)} ${P.map((p,i)=>`${x(i)},${y(p.v)}`).join(" ")} ${x(n-1)},${y(0)}"/><polyline fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linejoin="round" points="${P.map((p,i)=>`${x(i)},${y(p.v)}`).join(" ")}"/>`;
+    P.forEach((p,i)=>{if(p.real)g+=`<circle cx="${x(i)}" cy="${y(p.v)}" r="3.5" fill="var(--ink)"/>`;});
+    const e=P[n-1];g+=`<text x="${x(n-1)}" y="${y(e.v)-10}" text-anchor="end" font-size="12" fill="var(--red)">${wan(e.v)}</text>`;svg.innerHTML=g;}
+  const v=VALS();$("lf-values").innerHTML=(v.length?`<div class="vals">${v.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:`<span class="muted">還沒寫下價值觀。</span>`)+
+    (S.enoughNote?`<div class="callout" style="margin-top:10px"><b>我的「夠了」</b><span class="muted">${esc(S.enoughNote)}${en?`・${wan(en)}`:""}</span></div>`:"")+`<span class="muted" style="display:block;margin-top:8px">到設定的「一輩子」修改。</span>`;
+  const house=t.aTd+t.aEtf,tg=+S.houseTarget||1;
+  $("ch-list").innerHTML=S.chapters.map(c=>`<div class="goal done"><div class="top"><b style="font-weight:500">${esc(c.name)}</b><span class="num">${wan(c.achieved)} / ${wan(c.target)}・${pct(c.achieved/(c.target||1))}</span></div><span class="muted">${label(c.start)} — ${label(c.closed)}・${esc(c.fund)}</span></div>`).join("")+
+    `<div class="goal"><div class="top"><b style="font-weight:500">${esc(S.chapterName||"目前章節")} <span class="pill near" style="margin-left:6px">進行中</span></b><span class="num">${wan(house)} / ${wan(tg)}・${pct(house/tg)}</span></div>
+      <div class="bar"><i style="width:${Math.min(100,house/tg*100)}%"></i></div><span class="muted">${label(S.start)} — ${label(S.end)}・${FUND()}</span></div>`;}
+$("ch-next").onclick=()=>{$("ch-form").hidden=false;$("ch-next").hidden=true;$("ch-name").value=`第 ${S.chapters.length+2} 章：`;$("ch-fund").value="";$("ch-target").value="";$("ch-end").value=addM(nowYM,60);$("ch-name").focus();};
+$("ch-cancel").onclick=()=>{$("ch-form").hidden=true;$("ch-next").hidden=false;};
+$("ch-go").onclick=()=>{const name=$("ch-name").value.trim(),fund=$("ch-fund").value.trim(),tg=+$("ch-target").value||0,end=$("ch-end").value;
+  const start=A[nowYM]?addM(nowYM,1):nowYM;
+  if(!name||!fund){toast("請填寫章節名稱與要存的目標");return;}if(!(tg>0)){toast("請填寫目標金額");return;}if(!end||end<=start){toast("目標月份要晚於 "+label(start));return;}
+  const t=totals();S.chapters.push({name:S.chapterName||"上一章",fund:S.fundName||"買房基金",start:S.start,end:S.end,target:+S.houseTarget,achieved:t.aTd+t.aEtf,closed:addM(start,-1)});
+  S.chapterName=name;S.fundName=fund;S.houseTarget=tg;S.start=start;S.end=end;if(S.etfStop<=start||S.etfStop>end)S.etfStop=addM(end,-12)>start?addM(end,-12):end;
+  $("ch-form").hidden=true;$("ch-next").hidden=false;fillSettings();celebrate("新");persistSettings(`「${name}」開始了，上一章已存檔`);};
+
 /* ===== tabs ===== */
-const TABS=[["overview","總覽"],["advisor","AI 顧問"],["month","月報"],["year","年度"],["sim","模擬"],["assets","資產"],["milestones","里程碑"],["settings","設定"],["data","資料"]];
+const TABS=[["overview","總覽"],["advisor","AI 顧問"],["month","月報"],["year","年度"],["sim","模擬"],["assets","資產"],["milestones","人生"],["settings","設定"],["data","資料"]];
 let tab=(location.hash||"").slice(1);if(!TABS.some(t=>t[0]===tab))tab="overview";
 $("tabs").innerHTML=TABS.map(([k,n])=>`<button class="tab" role="tab" id="tab-${k}" aria-selected="${k===tab}" data-k="${k}">${n}</button>`).join("");
 function showTab(k){tab=k;document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.k===k));
@@ -598,7 +720,9 @@ function render(){const t=totals();
   document.title=S.book||"一磚一瓦";$("cover-title").textContent=S.book||"一磚一瓦";$("cover-eyebrow").textContent=`${(S.owner||"").toUpperCase()} ・ HOUSE FUND`;
   $("cover-sub").textContent=`${label(S.start)} — ${label(S.end)}`;
   $("f-etf-l").textContent=`存入 ${S.etfName||"ETF"}`;$("f-td-l").textContent=`存入 ${S.tdName||"定存"}`;$("f-ef-l").textContent=`存入緊急預備金（${S.efName||"帳戶"}）`;$("f-val-l").textContent=`${S.etfName||"ETF"} 月底市值（選填）`;
-  renderChips();renderAlerts(t);renderAdvisorStatus(t);drawHouse(t);renderOverview(t);renderSim();renderGoals(t);renderMonth(t);renderYear(t);renderAssets(t);renderMilestones();renderData();}
+  $("hero-lbl").textContent=`${S.chapterName||""}・${S.fundName||"買房基金"}已砌好`;$("sim-h").textContent=`${S.fundName||"買房基金"}累積`;$("a-alloc-h").textContent=`${S.fundName||"買房基金"}配置`;
+  $("st-end-l").textContent=`${S.fundName||"買房基金"}目標月份`;$("st-house-l").textContent=`${S.fundName||"買房基金"}金額`;$("st-living-h").textContent=`留空＝個人花費＋共同戶頭（目前約 ${fmt(livingCost())}）。用來算「自由」可以撐幾個月。`;
+  renderChips();renderAlerts(t);renderAdvisorStatus(t);renderLifeOverview(t);renderPrinciple();drawHouse(t);renderOverview(t);renderLife(t);renderSim();renderGoals(t);renderMonth(t);renderYear(t);renderAssets(t);renderMilestones();renderData();}
 
 function computeAlerts(t,raw){const L=[],today=new Date(),day=today.getDate(),rd=+S.recordDay||7;
   const dim=new Date(today.getFullYear(),today.getMonth()+1,0).getDate(),inPlan=m=>m>=S.start&&m<=S.end,dv=deviation(t);
@@ -624,6 +748,9 @@ function computeAlerts(t,raw){const L=[],today=new Date(),day=today.getDate(),rd
     if(dd>=0&&dd<=60)L.push({lv:"info",t:`即將到來：${esc(m.t)}`,d:`${label(m.d)}，大約 ${dd} 天後。`,act:["里程碑",()=>showTab("milestones")]});});
   if(cm===+S.start.slice(5)&&nowYM>S.start)L.push({lv:"info",t:"年度檢視月",d:"和 Yen 一起看存款進度、第二胎與買房時程，需要就到設定調整。",act:["設定",()=>showTab("settings")]});
   if(!raw&&Object.keys(A).length>=3&&(!S.lastExport||S.lastExport<new Date(Date.now()-90*864e5).toISOString()))L.push({lv:"info",t:"該備份了",d:"超過 3 個月沒有下載完整備份。",act:["備份",()=>showTab("data")]});
+  {const j3=t.rec.slice(-3);if(+S.joyBudget>0&&j3.length===3&&j3.every(m=>"joy" in A[m]&&!(+A[m].joy)))L.push({lv:"info",t:"快樂預算連續 3 個月沒用到",d:"存錢是為了過更好的生活，這筆錢本來就是要花的。挑一件你在乎的事吧。"});
+   const f3=j3.filter(m=>+A[m].feel===1).length;if(f3>=2)L.push({lv:"info",t:"最近常覺得錢花得後悔",d:"回頭看看那幾筆，是為了自己，還是為了別人的眼光？",act:["月報",()=>showTab("month")]});
+   const en=+S.enough||0;if(en&&lifeOf(t).assets>=en)L.push({lv:"good",t:"你已經到了自己定義的「夠了」",d:"接下來的錢，可以更多拿來換時間與自由，而不是追更大的數字。"});}
   const order={urgent:0,notice:1,info:2,good:3};return L.sort((a,b)=>order[a.lv]-order[b.lv]);}
 function renderAlerts(t){const L=computeAlerts(t),ic={urgent:"!",notice:"·",info:"i",good:"✓"};
   $("ov-alerts").innerHTML=L.map((a,i)=>`<li class="alert ${a.lv}"><span class="ic" aria-hidden="true">${ic[a.lv]}</span><div><b>${a.t}</b><span class="d">${a.d}</span></div>${a.act?`<button class="btn ghost small" id="al-${i}">${a.act[0]}</button>`:""}</li>`).join("");
@@ -632,9 +759,9 @@ function renderAlerts(t){const L=computeAlerts(t),ic={urgent:"!",notice:"·",inf
 
 function renderOverview(t){const rate=t.cP?t.cA/t.cP:null,sr=t.inc?t.cA/t.inc:null,f=forecastOf(t),efM=S.spend?t.aEf/S.spend:0;
   $("ov-kpis").innerHTML=kpi("累積達成率",t.rec.length?pct(rate):"—",`實際 ${wan(t.cA)} / 計畫 ${wan(t.cP)}`,true)+kpi("存款率",pct(sr),`目標 ${S.rateTarget}%`)+
-    kpi("預備金可撐",t.aEf?efM.toFixed(1)+" 個月":"—","以個人花費計")+kpi("買房基金",pct(f.house/S.houseTarget),`${wan(f.house)} / ${wan(S.houseTarget)}`);
+    kpi("預備金可撐",t.aEf?efM.toFixed(1)+" 個月":"—","以個人花費計")+kpi(FUND(),pct(f.house/S.houseTarget),`${wan(f.house)} / ${wan(S.houseTarget)}`);
   let h;if(!t.rec.length)h=`<b>記錄第一個月後，這裡會預估你哪個月存到買房基金。</b><span class="muted">照計畫，${label(S.end)} 應存到 ${wan(S.houseTarget)}。</span>`;
-  else if(f.remain<=0)h=`<b>買房基金已達標，可以開始看房了。</b>`;
+  else if(f.remain<=0)h=`<b>${FUND()}已達標！可以到「人生」分頁完成這一章，開始下一章。</b>`;
   else{const late=f.eta&&f.eta>S.end;h=`<b>照最近 ${Math.min(12,t.rec.length)} 個月的速度（每月約 ${fmt(f.pace)}），預計 ${f.eta?label(f.eta):"無法估算"} 存到目標。</b><span class="muted">${late?`比目標 ${label(S.end)} 晚；要準時達標，接下來每月需存約 ${fmt(f.need)} 進買房基金。`:`比目標 ${label(S.end)} 提早或準時，維持節奏即可。`}</span>`;}
   $("ov-forecast").innerHTML=h;drawCum($("ov-chart"),t);
   const last3=t.rec.slice(-3),over=last3.filter(m=>(+A[m].spend||0)>S.spend).length,share=f.house?t.aEtf/f.house:0,tg=nowYM<S.etfStop?S.etfPct/100:0;
@@ -643,7 +770,10 @@ function renderOverview(t){const rate=t.cP?t.cA/t.cP:null,sr=t.inc?t.cA/t.inc:nu
     [sr==null?"warn":sr*100>=S.rateTarget?"ok":sr*100>=S.rateTarget*.8?"warn":"bad","存款率達標",pct(sr)],
     [!last3.length?"warn":over===0?"ok":over===1?"warn":"bad","近 3 個月花費在預算內",last3.length?`${over} 個月超支`:"尚無資料"],
     [!f.house?"warn":Math.abs(share-tg)<=.1?"ok":"warn",`${ETF()} 比例接近目標`,`${pct(share)}（目標 ${pct(tg)}）`],
-    [streak>=3?"ok":streak>=1?"warn":"bad","連續達標",`${streak} 個月`]];
+    [streak>=3?"ok":streak>=1?"warn":"bad","連續達標",`${streak} 個月`],
+    ...(()=>{const lf=lifeOf(t),j3=t.rec.slice(-3).filter(m=>"joy" in A[m]),used=j3.filter(m=>+A[m].joy>0).length;
+      return [[lf.months>=6?"ok":lf.months>=3?"warn":"bad","自由：資產能撐 6 個月以上",lf.n?fmtMonths(lf.months):"尚無資料"],
+        [!(+S.joyBudget)||!j3.length?"warn":used===j3.length?"ok":used?"warn":"bad","快樂預算有好好花",j3.length?`近 ${j3.length} 個月有 ${used} 個月用到`:"尚無資料"]];})()];
   const sym={ok:"✓",warn:"!",bad:"✕"};$("ov-checks").innerHTML=C.map(([c,n,v])=>`<li><span class="mark ${c}" aria-hidden="true">${sym[c]}</span><span>${n}</span><span class="num muted">${v}</span></li>`).join("");}
 
 function drawCum(svg,t){const pl=t.P.pl,W=720,H=250,L=46,R=12,T=16,B=28,n=pl.length;if(n<2){svg.innerHTML="";return;}
@@ -669,7 +799,14 @@ function renderMonth(t){const p=t.P.get(curM),a=A[curM];$("m-pick").value=curM;
     return `<div class="cmp-row"><span class="lbl">${esc(n)}</span><div class="bars"><div class="b p" style="width:${pv/max*100}%"></div><div class="b a" style="width:${av==null?0:av/max*100}%"></div></div>
       <div class="nums num">${av==null?"—":fmt(av)}<span style="${bad?"color:var(--red)":""}">${d==null?"計畫 "+fmt(pv):(d>=0?"+":"−")+fmt(Math.abs(d))}</span></div></div>`;}).join("");
   $("m-note").innerHTML=a?`<b>備註</b><span class="muted">${a.note?esc(a.note):"這個月沒有備註。"}</span>`:`<b>${label(curM)} 還沒記錄</b><span class="muted">計畫存 ${fmt(p.save)}${p.bonus?`（含獎金 ${fmt(p.bonus)}）`:""}：預備金 ${fmt(p.ef)}・${TD()} ${fmt(p.td)}・${ETF()} ${fmt(p.etf)}</span>`;
-  $("m-edit").textContent=a?"修改這個月":"記錄這個月";renderSpend();}
+  $("m-edit").textContent=a?"修改這個月":"記錄這個月";renderSpend();renderRefl();}
+function renderRefl(){const a=A[curM],sec=$("m-refl-sec"),el=$("m-refl");if(!a){sec.hidden=true;return;}sec.hidden=false;const jb=+S.joyBudget||0,joy=+a.joy||0;
+  const feel={3:["ok","很值得"],2:["near","普通"],1:["low","有點後悔"]}[a.feel];
+  el.innerHTML=(jb?`<div class="bucket"><div class="top"><span>快樂花費 <span class="muted">無罪惡感的錢</span></span><span class="num">${fmt(joy)} / ${fmt(jb)}</span></div><div class="bar"><i style="width:${Math.min(100,joy/jb*100)}%;background:var(--good)"></i></div></div>`:"")+
+    `<ul class="checks plain"><li><span>這個月的錢花得</span><span>${feel?`<span class="pill ${feel[0]}">${feel[1]}</span>`:'<span class="muted">—</span>'}</span></li>
+    <li><span>最值得的一筆</span><span class="muted" style="white-space:normal;text-align:right">${a.best?esc(a.best):"—"}</span></li>
+    <li><span>最後悔的一筆</span><span class="muted" style="white-space:normal;text-align:right">${a.regret?esc(a.regret):"—"}</span></li></ul>`+
+    (!a.best&&!a.regret&&!a.feel?`<span class="muted">修改這個月時可以寫下反思。花錢是價值觀的展現，看見它，才能花得更像自己。</span>`:"");}
 
 function renderYear(t){const years=[...new Set([...t.P.pl.map(p=>p.ym.slice(0,4)),...t.rec.map(m=>m.slice(0,4)),nowYM.slice(0,4),curY])].sort();
   $("y-pick").innerHTML=years.map(y=>`<option value="${y}" ${y===curY?"selected":""}>${y} 年</option>`).join("");
@@ -692,13 +829,13 @@ function renderYear(t){const years=[...new Set([...t.P.pl.map(p=>p.ym.slice(0,4)
   $("y-rows").querySelectorAll("tr").forEach(tr=>{tr.onclick=()=>openEntry(tr.dataset.m);tr.onkeydown=e=>{if(e.key==="Enter")openEntry(tr.dataset.m)}});}
 
 function renderAssets(t){const house=t.aTd+t.aEtf;
-  const bk=[["緊急預備金",EFN(),t.aEf,S.efTarget,t.pEf],["買房基金",`${TD()}＋${ETF()}`,house,S.houseTarget,t.pH]];
+  const bk=[["緊急預備金",EFN(),t.aEf,S.efTarget,t.pEf],[FUND(),`${TD()}＋${ETF()}`,house,S.houseTarget,t.pH]];
   $("a-buckets").innerHTML=bk.map(([n,sub,a,tg,p])=>`<div class="bucket ${a>=tg?"done":""}"><div class="top"><span>${n} <span class="muted">${sub}</span></span><span class="num">${fmt(a)} / ${wan(tg)}・${pct(a/tg)}</span></div>
     <div class="bar"><i style="width:${Math.min(100,a/tg*100)}%"></i><b style="left:${Math.min(99.6,p/tg*100)}%"></b></div></div>`).join("")+
     `<div class="bucket"><div class="top"><span>長期投資 <span class="muted">${ETF()} 定期定額</span></span><span class="muted">${label(S.end)} 後開始</span></div><div class="bar"></div></div>`;
   const C=2*Math.PI*48,tdS=house?t.aTd/house:0;
   $("a-donut").innerHTML=`<circle cx="60" cy="60" r="48" fill="none" stroke="var(--paper-2)" stroke-width="16"/>`+(house?`<circle cx="60" cy="60" r="48" fill="none" stroke="var(--ink)" stroke-width="16" stroke-dasharray="${tdS*C} ${C}"/><circle cx="60" cy="60" r="48" fill="none" stroke="var(--red)" stroke-width="16" stroke-dasharray="${(1-tdS)*C} ${C}" stroke-dashoffset="${-tdS*C}"/>`:"");
-  $("a-donut-c").innerHTML=house?`<b class="num">${wan(house)}</b><span class="muted">買房基金</span>`:`<span class="muted">尚無資料</span>`;
+  $("a-donut-c").innerHTML=house?`<b class="num">${wan(house)}</b><span class="muted">${FUND()}</span>`:`<span class="muted">尚無資料</span>`;
   const gain=t.etfVal!=null?t.etfVal-t.aEtf:null;
   $("a-alloc").innerHTML=`<div class="legend"><span><i style="background:var(--ink)"></i>${TD()} ${pct(tdS)}・${fmt(t.aTd)}</span><span><i style="background:var(--red)"></i>${ETF()} ${house?pct(1-tdS):"—"}・${fmt(t.aEtf)}</span></div>
     <span class="muted">目標：${ETF()} 約 ${S.etfPct}%，${label(S.etfStop)} 起停買，買房前轉入 ${TD()}。</span>
@@ -774,25 +911,29 @@ function renderGoals(t){const el=$("goals");if(!S.goals.length){el.innerHTML=`<s
     $("gx-"+i).onclick=()=>{S.goals.splice(i,1);persistSettings("已刪除目標");};});}
 
 /* ===== simulation ===== */
-let SIM={sal:0,bon:0,sp:0,ret:5,end:null};
+let SIM={sal:0,bon:0,sp:0,ret:5,end:null,crash:false,jobless:0};
 const SIMC=[["sal","月薪變化",-30,30,5,v=>(v>0?"+":"")+v+"%"],["bon","獎金變化",-100,50,10,v=>(v>0?"+":"")+v+"%"],["sp","每月花費變化",-5000,15000,1000,v=>(v>0?"+":"")+fmt(v)],["ret","成長工具年報酬",-10,15,1,v=>v+"%"]];
 $("sim-ctrls").innerHTML=SIMC.map(([k,n,mi,ma,st])=>`<div class="sim-row"><div class="field"><label for="sim-${k}">${n}</label><input id="sim-${k}" type="range" min="${mi}" max="${ma}" step="${st}"></div><output id="so-${k}" for="sim-${k}"></output></div>`).join("")+
-  `<div class="sim-row"><div class="field"><label for="sim-end">買房目標月份</label><input id="sim-end" type="month"></div><output></output></div>`;
+  `<div class="sim-row"><div class="field"><label for="sim-end">目標月份</label><input id="sim-end" type="month"></div><output></output></div>
+  <div class="field"><label>壓力測試・安全邊際</label><div class="chips"><button type="button" class="chip" id="ss-crash">股市腰斬</button><button type="button" class="chip" id="ss-job">失業 6 個月</button><button type="button" class="chip" id="ss-bon">獎金歸零</button></div>
+    <span class="hint">好的計畫不是假設一切順利，而是出事了也撐得住。</span></div>`;
+$("ss-crash").onclick=()=>{SIM.crash=!SIM.crash;renderSim();};$("ss-job").onclick=()=>{SIM.jobless=SIM.jobless?0:6;renderSim();};$("ss-bon").onclick=()=>{SIM.bon=SIM.bon===-100?0:-100;renderSim();};
 SIMC.forEach(([k])=>$("sim-"+k).addEventListener("input",e=>{SIM[k]=+e.target.value;renderSim();}));
 $("sim-end").onchange=e=>{if(e.target.value){SIM.end=e.target.value;renderSim();}};
-$("sim-reset").onclick=()=>{SIM={sal:0,bon:0,sp:0,ret:5,end:null};renderSim();};
-function series(mod,ret,horizon){const keep=S,t=totals();S={...clone(keep),...mod,end:horizon};let pl;try{pl=buildPlan();}finally{S=keep;}
-  let td=t.aTd,etf=t.aEtf;const out=[];for(const p of pl){if(p.ym<=t.upto)continue;etf*=1+ret/1200;td+=p.td;etf+=p.etf;out.push({ym:p.ym,v:td+etf});}return {start:t.aTd+t.aEtf,upto:t.upto,out};}
-function renderSim(){if(!$("sim-sal"))return;const rl=document.querySelector('label[for="sim-ret"]');if(rl)rl.textContent=`${S.etfName||"成長工具"} 年報酬`;SIMC.forEach(([k,,,,,f])=>{$("sim-"+k).value=SIM[k];$("so-"+k).textContent=f(SIM[k]);});
+$("sim-reset").onclick=()=>{SIM={sal:0,bon:0,sp:0,ret:5,end:null,crash:false,jobless:0};renderSim();};
+function series(mod,ret,horizon,opt){opt=opt||{};const keep=S,t=totals();S={...clone(keep),...mod,end:horizon};let pl;try{pl=buildPlan();}finally{S=keep;}
+  let td=t.aTd,etf=t.aEtf*(opt.crash?.5:1),k=0;const out=[];for(const p of pl){if(p.ym<=t.upto)continue;etf*=1+ret/1200;if(k++>=(opt.jobless||0)){td+=p.td;etf+=p.etf;}out.push({ym:p.ym,v:td+etf});}return {start:t.aTd+t.aEtf*(opt.crash?.5:1),upto:t.upto,out};}
+function renderSim(){if(!$("sim-sal"))return;$("ss-crash").classList.toggle("on",SIM.crash);$("ss-job").classList.toggle("on",!!SIM.jobless);$("ss-bon").classList.toggle("on",SIM.bon===-100);const rl=document.querySelector('label[for="sim-ret"]');if(rl)rl.textContent=`${S.etfName||"成長工具"} 年報酬`;SIMC.forEach(([k,,,,,f])=>{$("sim-"+k).value=SIM[k];$("so-"+k).textContent=f(SIM[k]);});
   const end=SIM.end||S.end;$("sim-end").value=end;
   const mod={salary:Math.round(S.salary*(1+SIM.sal/100)),bonus:Math.round(S.bonus*(1+SIM.bon/100)),bonus2:Math.round((+S.bonus2||0)*(1+SIM.bon/100)),spend:Math.max(0,+S.spend+SIM.sp)};
-  const horizon=addM([S.end,end].sort()[1],36),base=series({},SIM.ret,horizon),sc=series(mod,SIM.ret,horizon),tg=+S.houseTarget;
+  const horizon=addM([S.end,end].sort()[1],36),base=series({},SIM.ret,horizon),sc=series(mod,SIM.ret,horizon,{crash:SIM.crash,jobless:SIM.jobless}),tg=+S.houseTarget;
   const at=(sr,m)=>{const f=sr.out.find(x=>x.ym===m);return f?f.v:sr.start;},eta=sr=>{if(sr.start>=tg)return sr.upto;const f=sr.out.find(x=>x.v>=tg);return f?f.ym:null;};
   const vb=at(base,S.end),vs=at(sc,end),eb=eta(base),es=eta(sc),diff=es&&eb?range(eb,es).length-1:null,shift=es&&eb&&es<eb?-(range(es,eb).length-1):diff;
   $("sim-kpis").innerHTML=kpi(`${label(end)} 時可存到`,wan(vs),`目標 ${wan(tg)}・${vs>=tg?"已達標":"差 "+wan(tg-vs)}`,true)+
     kpi("預估存到目標",es?label(es):"超過 3 年後",eb?`目前計畫 ${label(eb)}`:"")+
     kpi("達標時間",shift==null?"—":shift===0?"不變":shift<0?`提早 ${-shift} 個月`:`延後 ${shift} 個月`,"與目前計畫相比")+
-    kpi("每月可存",fmt(Math.max(0,mod.salary-Math.round(mod.salary*S.j2/100)-mod.spend)),"以後期共同戶頭比例計");
+    (SIM.jobless?(()=>{const tt=totals(),need=SIM.jobless*livingCost(),have=tt.aEf;return kpi("安全邊際",have>=need?"撐得過":"不夠",`失業 ${SIM.jobless} 個月約需 ${wan(need)}，預備金 ${wan(have)}`);})():
+    kpi("每月可存",fmt(Math.max(0,mod.salary-Math.round(mod.salary*S.j2/100)-mod.spend)),"以後期共同戶頭比例計"));
   const W=720,H=240,L=46,R=12,T=14,B=28,ms=base.out.map(x=>x.ym),n=ms.length;if(n<2){$("sim-chart").innerHTML="";return;}
   const max=Math.max(tg,...base.out.map(x=>x.v),...sc.out.map(x=>x.v))*1.05,x=i=>L+i*(W-L-R)/(n-1),y=v=>T+(H-T-B)*(1-v/max);let g="";
   [0,.5,1].forEach(f=>g+=`<line x1="${L}" x2="${W-R}" y1="${y(max*f)}" y2="${y(max*f)}" stroke="var(--line)"/><text x="${L-8}" y="${y(max*f)+4}" text-anchor="end" font-size="11" fill="var(--ink-soft)">${wan(max*f)}</text>`);
@@ -804,7 +945,7 @@ function renderSim(){if(!$("sim-sal"))return;const rl=document.querySelector('la
   $("sim-chart").innerHTML=g;}
 $("sim-apply").onclick=()=>{$("sim-confirm").hidden=false;};
 $("sim-yes").onclick=()=>{S.salary=Math.round(S.salary*(1+SIM.sal/100));S.bonus=Math.round(S.bonus*(1+SIM.bon/100));S.bonus2=Math.round((+S.bonus2||0)*(1+SIM.bon/100));
-  S.spend=Math.max(0,+S.spend+SIM.sp);if(SIM.end)S.end=SIM.end;SIM={sal:0,bon:0,sp:0,ret:SIM.ret,end:null};$("sim-confirm").hidden=true;fillSettings();persistSettings("已套用到計畫");};
+  S.spend=Math.max(0,+S.spend+SIM.sp);if(SIM.end)S.end=SIM.end;SIM={sal:0,bon:0,sp:0,ret:SIM.ret,end:null,crash:false,jobless:0};$("sim-confirm").hidden=true;fillSettings();persistSettings("已套用到計畫");};
 
 /* ===== spend categories ===== */
 const SPN=["固定","育兒","彈性"],SPC=["var(--ink)","var(--warn)","var(--red)"];
@@ -857,13 +998,15 @@ function aiErr(e){const c=e&&e.code;if(c==="cancelled"||(e&&e.name==="AbortError
   if(c==="not_granted"||c==="sampling_disabled")return "沒有取得使用 AI 的許可";if(c==="rate_limited")return "使用量已到上限，請稍後再試";
   if(e instanceof TypeError)return "連不到 API。若在 Claude 中開啟，請改用 Claude 內建";return "連線中斷，請再試一次";}
 function buildContext(t){const f=forecastOf(t),dv=deviation(t),last=t.rec.slice(-12);
-  const rows=last.map(m=>{const a=A[m],p=t.P.get(m);return `${m}｜收入${fmt(a.income)}｜共同戶頭${fmt(a.joint)}｜花費${fmt(a.spend)}(預算${fmt(p.spend)})｜存款${fmt(saved(a))}(計畫${fmt(p.save)})：預備金${fmt(a.ef)}、${S.tdName}${fmt(a.td)}、${S.etfName}${fmt(a.etf)}${a.val?`｜${S.etfName}市值${fmt(a.val)}`:""}${a.note?`｜備註:${a.note}`:""}`;}).join("\n");
+  const rows=last.map(m=>{const a=A[m],p=t.P.get(m);return `${m}｜收入${fmt(a.income)}｜共同戶頭${fmt(a.joint)}｜花費${fmt(a.spend)}(預算${fmt(p.spend)})｜存款${fmt(saved(a))}(計畫${fmt(p.save)})：預備金${fmt(a.ef)}、${S.tdName}${fmt(a.td)}、${S.etfName}${fmt(a.etf)}${a.val?`｜${S.etfName}市值${fmt(a.val)}`:""}${a.note?`｜備註:${a.note}`:""}${a.joy?`｜快樂花費${fmt(a.joy)}`:""}${a.feel?`｜自評:${{3:"很值得",2:"普通",1:"後悔"}[a.feel]}`:""}${a.best?`｜最值得:${a.best}`:""}${a.regret?`｜最後悔:${a.regret}`:""}${a.nw?`｜月底總資產${fmt(a.nw)}`:""}`;}).join("\n");
   const al=computeAlerts(t,true).map(a=>`- ${a.t}：${a.d}`).join("\n");
   return `【使用者】${S.owner}，31 歲，台灣，已婚，2026/04 生第一胎，計畫 2028 年生第二胎，約 2038 年全家移民加拿大。先生 Yen 年收約 100 萬。
-【計畫設定】期間 ${label(S.start)}–${label(S.end)}；月薪 ${fmt(S.salary)}；個人花費預算 ${fmt(S.spend)}；共同戶頭 ${S.j1}%（${label(S.jSwitch)} 起 ${S.j2}%）；年終 ${fmt(S.bonus)} 於 ${S.bonusMonth} 月${+S.bonus2?`；其他獎金 ${fmt(S.bonus2)} 於 ${S.bonusMonth2} 月`:""}；第二胎期間 ${label(S.kidFrom)||"無"}–${label(S.kidTo)||"無"} 每月存 ${fmt(S.kidSave)}；緊急預備金放在${S.efName}；買房基金用 ${S.tdName} 與 ${S.etfName}，其中 ${S.etfName} 占 ${S.etfPct}%，${label(S.etfStop)} 停買；緊急預備金目標 ${fmt(S.efTarget)}；買房基金目標 ${fmt(S.houseTarget)}；存款率目標 ${S.rateTarget}%。
+【計畫設定】期間 ${label(S.start)}–${label(S.end)}；月薪 ${fmt(S.salary)}；個人花費預算 ${fmt(S.spend)}；共同戶頭 ${S.j1}%（${label(S.jSwitch)} 起 ${S.j2}%）；年終 ${fmt(S.bonus)} 於 ${S.bonusMonth} 月${+S.bonus2?`；其他獎金 ${fmt(S.bonus2)} 於 ${S.bonusMonth2} 月`:""}；第二胎期間 ${label(S.kidFrom)||"無"}–${label(S.kidTo)||"無"} 每月存 ${fmt(S.kidSave)}；緊急預備金放在${S.efName}；${S.fundName}用 ${S.tdName} 與 ${S.etfName}，其中 ${S.etfName} 占 ${S.etfPct}%，${label(S.etfStop)} 停買；緊急預備金目標 ${fmt(S.efTarget)}；${S.fundName}目標 ${fmt(S.houseTarget)}；存款率目標 ${S.rateTarget}%。
 ${S.goals.length?`【其他目標】${S.goals.map(g=>`${g.name} 目標 ${fmt(g.target)}，期限 ${label(g.due)||"無"}，每月計畫 ${fmt(g.monthly)}，目前 ${fmt(t.gA[g.id]||0)}`).join("；")}
 `:""}【累積】計畫 ${fmt(t.cP)}，實際 ${fmt(t.cA)}，達成率 ${pct(t.cP?t.cA/t.cP:null)}；緊急預備金 ${fmt(t.aEf)}；${S.tdName} ${fmt(t.aTd)}；${S.etfName} 成本 ${fmt(t.aEtf)}${t.etfVal!=null?`、市值 ${fmt(t.etfVal)}`:""}；存款率 ${pct(t.inc?t.cA/t.inc:null)}。
-【預估】最近平均每月存入買房基金 ${fmt(f.pace)}，尚差 ${fmt(f.remain)}，${f.eta?`預估 ${label(f.eta)} 達標`:"無法預估"}；若要在 ${label(S.end)} 達標，每月需 ${fmt(f.need)}。
+【預估】最近平均每月存入${S.fundName} ${fmt(f.pace)}，尚差 ${fmt(f.remain)}，${f.eta?`預估 ${label(f.eta)} 達標`:"無法預估"}；若要在 ${label(S.end)} 達標，每月需 ${fmt(f.need)}。
+【一輩子】目前章節「${S.chapterName}」${S.chapters.length?`；已完成章節：${S.chapters.map(c=>`${c.name}（${c.fund} ${fmt(c.achieved)}/${fmt(c.target)}）`).join("、")}`:""}；估計總資產 ${fmt(lifeOf(t).assets)}，每月必要開銷 ${fmt(livingCost())}，能撐 ${fmtMonths(lifeOf(t).months)}；「夠了」${+S.enough?fmt(S.enough):"未設定"}${S.enoughNote?`（${S.enoughNote}）`:""}；每月快樂預算 ${fmt(S.joyBudget)}。
+【她的金錢價值觀】${VALS().join("、")||"未填"}
 【偏離判斷】${dv.lv}：${dv.reasons.join("；")}
 【近 12 筆紀錄】
 ${last.length?rows:"（尚無紀錄）"}
@@ -872,6 +1015,7 @@ ${al||"（無）"}
 【今天】${new Date().toISOString().slice(0,10)}`;}
 const AI_RULES=`你是台灣的資深理財規劃顧問，正在看客戶的「存房手帳」資料。請用繁體中文、溫和但直接的語氣回答。
 格式：第一行用一句話判斷現況（例如「進度健康」「輕微落後」「嚴重偏離」）。接著給 3 到 5 點建議，每點以粗體的短結論開頭，後面接一句具體做法，盡量附上金額或月份。最後一行寫「下一步」：本週就能做的一件事。
+理念：以 Morgan Housel《致富心態》與《花錢的藝術》為底——錢最大的價值是換到時間自主；計畫要留安全邊際；要懂得「夠了」，別讓目標一直往後移；花錢應符合她自己的價值觀而非別人的眼光，快樂預算該花就花；看長期與持續，不追短期最佳化。
 規則：只根據資料推論，資料不足時直說缺什麼；不推薦個股；不保證報酬；考量她有新生兒與第二胎計畫，避免建議過度壓縮生活費；總長度控制在 250 字以內。`;
 function md(src){const lines=esc(src).split(/\n/);let h="",list=null;const inl=s=>s.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>"),close=()=>{if(list){h+=`</${list}>`;list=null;}};
   for(const raw of lines){const l=raw.trim();if(!l){close();continue;}let m;
@@ -890,7 +1034,7 @@ async function askAI(q){showTab("advisor");const out=$("ai-out"),meta=$("ai-meta
   finally{if(ctl===my){ctl=null;stop.hidden=true;document.querySelectorAll("#ai-tools button").forEach(b=>b.disabled=false);}}}
 function renderAdvisorStatus(t){const dv=deviation(t),map={none:["none","尚無資料"],ok:["ok","正常"],notice:["near","注意"],severe:["low","嚴重偏離"]}[dv.lv];
   $("ai-status").innerHTML=`<b>目前狀態<span class="lvl pill ${map[0]}">${map[1]}</span></b><span class="muted">${dv.reasons.join("；")}</span>`;}
-const QUICK=()=>["落後了要怎麼追？","這個月獎金怎麼分配最好？","花費一直超支，怎麼調整？","第二胎期間計畫要怎麼改？",`${S.etfName||"成長工具"} 比例要調整嗎？`,"買房時間要提前或延後嗎？"];
+const QUICK=()=>["落後了要怎麼追？","這個月獎金怎麼分配最好？","花費一直超支，怎麼調整？","第二胎期間計畫要怎麼改？",`${S.etfName||"成長工具"} 比例要調整嗎？`,"買房時間要提前或延後嗎？","我的花費符合我的價值觀嗎？","我的安全邊際夠嗎？","幫我想想什麼叫「夠了」"];
 function renderChips(){const q=QUICK();$("ai-chips").innerHTML=q.map((x,i)=>`<button type="button" class="chip" id="qc-${i}">${esc(x)}</button>`).join("");q.forEach((x,i)=>$("qc-"+i).onclick=()=>askAI(x));}
 $("ai-diag").onclick=()=>askAI(null);$("ai-stop").onclick=()=>{if(ctl)ctl.abort();};
 $("ai-form").addEventListener("submit",e=>{e.preventDefault();const q=$("ai-q").value.trim();if(q){askAI(q);$("ai-q").value="";}});
@@ -905,11 +1049,12 @@ $("y-prev").onclick=()=>{curY=String(+curY-1);render();};$("y-next").onclick=()=
 $("ov-rec").onclick=()=>openEntry(nowYM<S.start?S.start:nowYM);
 
 /* ===== entry ===== */
-const F=["income","joint","spend","ef","td","etf","val"];let editing=null;
+const F=["income","joint","spend","ef","td","etf","val","nw","joy"];let editing=null;
 function openEntry(ym){editing=ym;$("f-month").value=ym;fillEntry();$("sheet-bg").hidden=false;$("f-income").focus();}
 function renderGoalInputs(){$("f-goals").innerHTML=S.goals.length?`<div class="fgrid">${S.goals.map((g,i)=>`<div class="field"><label for="f-g-${i}">存入 ${esc(g.name)}</label><input id="f-g-${i}" type="number" inputmode="numeric"></div>`).join("")}</div>`:"";
   S.goals.forEach((g,i)=>$("f-g-"+i).addEventListener("input",calc));}
-function fillEntry(){renderGoalInputs();const a=A[editing]||{};F.forEach(k=>$("f-"+k).value=a[k]??"");$("f-note").value=a.note||"";
+function fillEntry(){renderGoalInputs();const a=A[editing]||{};F.forEach(k=>$("f-"+k).value=a[k]??"");$("f-note").value=a.note||"";$("f-best").value=a.best||"";$("f-regret").value=a.regret||"";$("f-feel").value=a.feel||"";
+  {const v=VALS();$("f-values").innerHTML=v.length?`你在乎的：${v.map(esc).join("・")}`:"到設定寫下你的金錢價值觀，記錄時會在這裡提醒你。";}
   [0,1,2].forEach(i=>$("f-sp"+i).value=Array.isArray(a.sp)&&+a.sp[i]?a.sp[i]:"");S.goals.forEach((g,i)=>$("f-g-"+i).value=(a.g||{})[g.id]??"");
   const ov=S.overrides[editing];$("f-override").value=ov??"";
   $("e-title").textContent=label(editing)+" 記錄";$("e-plan").textContent="計畫存 "+fmt(planMap().get(editing).save);
@@ -928,11 +1073,11 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet-bg").hidd
 $("e-clear").onclick=()=>{$("e-confirm").hidden=false;$("e-clear").hidden=true;};
 $("e-yes").onclick=async()=>{const ym=editing;closeEntry();try{await Store.delMonth(ym);toast("已清除");}catch(e){toast("清除失敗，請再試一次");}render();};
 $("entry").addEventListener("submit",async e=>{e.preventDefault();const ym=editing,d={};F.forEach(k=>d[k]=+$("f-"+k).value||0);
-  d.note=$("f-note").value.trim();d.updated=new Date().toISOString();const sp=[0,1,2].map(i=>+$("f-sp"+i).value||0);if(sp.some(v=>v))d.sp=sp;
+  d.note=$("f-note").value.trim();d.best=$("f-best").value.trim();d.regret=$("f-regret").value.trim();d.feel=+$("f-feel").value||0;d.updated=new Date().toISOString();const sp=[0,1,2].map(i=>+$("f-sp"+i).value||0);if(sp.some(v=>v))d.sp=sp;
   const gg={};S.goals.forEach((g,i)=>{const v=+$("f-g-"+i).value||0;if(v)gg[g.id]=v;});if(Object.keys(gg).length)d.g=gg;
   const ov=$("f-override").value.trim(),had=S.overrides[ym];
   const ovChanged=(ov===""?null:+ov)!==(had==null||had===""?null:+had);if(ov==="")delete S.overrides[ym];else S.overrides[ym]=+ov;
-  const hasActual=F.some(k=>k!=="val"&&d[k])||!!d.note||!!d.g||!!A[ym];curM=ym;curY=ym.slice(0,4);closeEntry();
+  const hasActual=F.some(k=>k!=="val"&&d[k])||!!d.note||!!d.best||!!d.regret||!!d.g||!!A[ym];curM=ym;curY=ym.slice(0,4);closeEntry();
   try{if(hasActual)await Store.saveMonth(ym,d);if(ovChanged)await Store.saveSettings();const pp=planMap().get(ym).save;if(hasActual&&pp&&saved(d)>=pp)celebrate("達");toast("已儲存 "+label(ym));}catch(err){toast("儲存失敗，請再試一次");}render();});
 
 /* ===== settings ===== */
@@ -941,25 +1086,26 @@ $("st-bmonth").innerHTML=monthOpts(false);$("st-bmonth2").innerHTML=monthOpts(tr
 ["st-pay","st-recd"].forEach(id=>$(id).innerHTML=Array.from({length:28},(_,i)=>`<option value="${i+1}">每月 ${i+1} 號</option>`).join(""));
 const SM={owner:"st-owner",book:"st-book",start:"st-start",end:"st-end",salary:"st-salary",spend:"st-spend",j1:"st-j1",j2:"st-j2",jSwitch:"st-jsw",
   bonus:"st-bonus",bonusMonth:"st-bmonth",bonus2:"st-bonus2",bonusMonth2:"st-bmonth2",kidFrom:"st-kfrom",kidTo:"st-kto",kidSave:"st-kid",
-  efName:"st-efname",tdName:"st-tdname",etfName:"st-etfname",etfPct:"st-etf",etfStop:"st-estop",tdTerm:"st-tdterm",efTarget:"st-ef",houseTarget:"st-house",rateTarget:"st-rate",payDay:"st-pay",recordDay:"st-recd",devLine:"st-dev"};
-const TEXTKEYS=["owner","book","start","end","jSwitch","kidFrom","kidTo","efName","tdName","etfName","etfStop"];
-function fillSettings(){for(const k in SM)$(SM[k]).value=S[k]??"";}
+  efName:"st-efname",tdName:"st-tdname",etfName:"st-etfname",etfPct:"st-etf",etfStop:"st-estop",tdTerm:"st-tdterm",chapterName:"st-chapter",fundName:"st-fund",living:"st-living",joyBudget:"st-joy",enough:"st-enough",enoughNote:"st-enoughnote",values:"st-values",efTarget:"st-ef",houseTarget:"st-house",rateTarget:"st-rate",payDay:"st-pay",recordDay:"st-recd",devLine:"st-dev"};
+const TEXTKEYS=["chapterName","fundName","enoughNote","values","owner","book","start","end","jSwitch","kidFrom","kidTo","efName","tdName","etfName","etfStop"];
+function fillSettings(){for(const k in SM)$(SM[k]).value=S[k]??"";["living","enough"].forEach(k=>{if(!+S[k])$(SM[k]).value="";});}
 async function persistSettings(msg){try{await Store.saveSettings();toast(msg);}catch(e){toast("儲存失敗，請再試一次");}render();}
 function renameEverywhere(n,key,fallback){const o=(S[key]||fallback).trim(),nw=(n[key]||fallback).trim();if(!o||!nw||o===nw)return;
   const sw=t=>String(t).split(o).join(nw);n.ms=n.ms.map(m=>({...m,t:sw(m.t)}));n.goals=n.goals.map(g=>({...g,name:sw(g.name)}));}
 function applySettings(msg){const n=clone(S);
-  for(const k in SM){const v=$(SM[k]).value;if(TEXTKEYS.includes(k)){const tv=v.trim();if(tv||["kidFrom","kidTo"].includes(k))n[k]=tv;}else if(v!=="")n[k]=+v;}
+  for(const k in SM){const v=$(SM[k]).value;if(TEXTKEYS.includes(k)){const tv=v.trim();if(tv||["kidFrom","kidTo","enoughNote","values"].includes(k))n[k]=tv;}else if(v!=="")n[k]=+v;else if(["living","enough"].includes(k))n[k]=0;}
   if(!n.start||!n.end||n.start>n.end){toast("第一個記錄月份要早於買房目標月份");return;}
   if(!!n.kidFrom!==!!n.kidTo){toast("第二胎期間請填完整，或兩個都留空");return;}
   if(!n.jSwitch)n.jSwitch=n.end;if(!n.etfStop)n.etfStop=n.end;
   renameEverywhere(n,"etfName","0050");renameEverywhere(n,"tdName","定存");renameEverywhere(n,"efName","高利數位帳戶");
+  if(+S.enough>0&&+n.enough>+S.enough)msg="已儲存。小提醒：「夠了」一再往上調，就永遠到不了。確定這是你真正需要的嗎？";
   S=n;persistSettings(msg);}
 $("set-form").addEventListener("submit",e=>{e.preventDefault();applySettings("設定已儲存");});
-$("set-form").addEventListener("change",e=>{if(e.target.id==="st-theme")return;if(e.target.matches("input,select"))applySettings("已自動儲存");});
+$("set-form").addEventListener("change",e=>{if(e.target.id==="st-theme")return;if(e.target.matches("input,select,textarea"))applySettings("已自動儲存");});
 $("st-theme").value=LS.get("yzyw:theme","light");
 $("st-theme").onchange=e=>{const v=e.target.value;LS.set("yzyw:theme",v);const r=document.documentElement;if(v==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",v);toast(v==="light"?"已改為淺色":v==="dark"?"已改為深色":"已改為跟隨手機設定");};
 $("st-reset").onclick=()=>{$("st-reset-confirm").hidden=false;};
-$("st-reset-yes").onclick=()=>{const keep={owner:S.owner,book:S.book,ms:S.ms,overrides:S.overrides,lastExport:S.lastExport};S={...clone(DEFAULTS),...keep};fillSettings();$("st-reset-confirm").hidden=true;persistSettings("已回到預設值");};
+$("st-reset-yes").onclick=()=>{const keep={owner:S.owner,book:S.book,ms:S.ms,overrides:S.overrides,lastExport:S.lastExport,chapters:S.chapters,chapterName:S.chapterName,fundName:S.fundName,values:S.values,enough:S.enough,enoughNote:S.enoughNote,living:S.living,joyBudget:S.joyBudget,...(S.chapters.length?{start:S.start,end:S.end,houseTarget:S.houseTarget}:{})};S={...clone(DEFAULTS),...keep};fillSettings();$("st-reset-confirm").hidden=true;persistSettings("已回到預設值");};
 
 /* ===== data: export / import / snapshots ===== */
 function backupObj(){return {app:"一磚一瓦",version:1,exportedAt:new Date().toISOString(),settings:S,months:A,advice:ADV};}
@@ -968,9 +1114,9 @@ async function saveFile(name,text){
   try{const url=URL.createObjectURL(new Blob([text],{type:name.endsWith(".csv")?"text/csv":"application/json"}));const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);return true;}catch(e){return false;}}
 const stamp=()=>new Date().toISOString().slice(0,10);
 $("d-json").onclick=async()=>{const ok=await saveFile(`yzyw-backup-${stamp()}.json`,JSON.stringify(backupObj(),null,2));if(ok){S.lastExport=new Date().toISOString();try{await Store.saveSettings();}catch(e){}render();toast("已匯出備份");}};
-$("d-csv").onclick=async()=>{const P=planMap(),h=["月份","計畫存款","實際存款","達成率","收入","共同戶頭","個人花費","緊急預備金",S.tdName||"定存",S.etfName||"ETF",`${S.etfName||"ETF"}市值`,"備註"];
+$("d-csv").onclick=async()=>{const P=planMap(),h=["月份","計畫存款","實際存款","達成率","收入","共同戶頭","個人花費","緊急預備金",S.tdName||"定存",S.etfName||"ETF",`${S.etfName||"ETF"}市值`,"月底總資產","快樂花費","花得","最值得","最後悔","備註"];
   const rows=[...new Set([...P.pl.map(p=>p.ym),...Object.keys(A)])].sort().map(m=>{const a=A[m]||{},p=P.get(m),s=A[m]?saved(a):"";
-    return [m,p.save,s,A[m]&&p.save?(s/p.save*100).toFixed(1)+"%":"",a.income??"",a.joint??"",a.spend??"",a.ef??"",a.td??"",a.etf??"",a.val||"",String(a.note||"").replace(/"/g,'""')].map(v=>`"${v}"`).join(",");});
+    return [m,p.save,s,A[m]&&p.save?(s/p.save*100).toFixed(1)+"%":"",a.income??"",a.joint??"",a.spend??"",a.ef??"",a.td??"",a.etf??"",a.val||"",a.nw||"",a.joy??"",({3:"很值得",2:"普通",1:"後悔"})[a.feel]||"",String(a.best||"").replace(/"/g,'""'),String(a.regret||"").replace(/"/g,'""'),String(a.note||"").replace(/"/g,'""')].map(v=>`"${v}"`).join(",");});
   const ok=await saveFile(`yzyw-months-${stamp()}.csv`,"﻿"+[h.map(v=>`"${v}"`).join(","),...rows].join("\r\n"));if(ok)toast("已匯出 CSV");};
 $("d-copy").onclick=async()=>{const txt=JSON.stringify(backupObj());try{await navigator.clipboard.writeText(txt);toast("已複製，可貼到記事本保存");}catch(e){toast("無法複製，請改用下載");}};
 let pending=null;
